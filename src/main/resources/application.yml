@@ -1,0 +1,13 @@
+axon:
+  axonserver:
+    enabled: false
+spring:
+  h2:
+    console:
+      enabled: true
+      settings:
+        web-allow-others: true
+  datasource:
+    generate-unique-name: false
+  main:
+    banner-mode: off
