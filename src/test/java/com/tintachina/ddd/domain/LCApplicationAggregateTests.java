@@ -2,20 +2,51 @@ package com.tintachina.ddd.domain;
 
 import com.tintachina.ddd.domain.commands.ChangeAdvisingBankCommand;
 import com.tintachina.ddd.domain.commands.CreateLCApplicationCommand;
+import com.tintachina.ddd.domain.commands.SaveLCApplicationCommand;
 import com.tintachina.ddd.domain.commands.SubmitLCApplicationCommand;
-import com.tintachina.ddd.domain.events.AdvisingBankChangedEvent;
-import com.tintachina.ddd.domain.events.LCApplicationCreatedEvent;
-import com.tintachina.ddd.domain.events.LCApplicationSubmittedEvent;
+import com.tintachina.ddd.domain.events.*;
 import org.axonframework.test.aggregate.AggregateTestFixture;
 import org.axonframework.test.aggregate.FixtureConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static com.tintachina.ddd.domain.commands.StartNewLCApplicationCommand.startApplication;
 import static org.axonframework.test.matchers.Matchers.*;
 import static org.hamcrest.Matchers.any;
 
 public class LCApplicationAggregateTests {
 
+    private FixtureConfiguration<LCApplication> fixture;
+
+    @BeforeEach
+    void setUp() {
+        fixture = new AggregateTestFixture<>(LCApplication.class);
+    }
+
+    @Test
+    void shouldPublishLCApplicationIsStarted() {
+        fixture.given()
+
+                .when(startApplication("admin", "My Test"))
+
+                .expectEventsMatching(exactSequenceOf(
+                        messageWithPayload(any(LCApplicationStartedEvent.class)),
+                        andNoMore()
+                ));
+    }
+
+    @Test
+    void shouldSaveLCApplication() {
+        final LCApplicationId id = LCApplicationId.randomId();
+        final LCApplicationStartedEvent started = new LCApplicationStartedEvent(id,
+                "test-user", "Test LC");
+        fixture.given(started)
+                .when(new SaveLCApplicationCommand(id))
+                .expectEvents(new LCApplicationSavedEvent());
+    }
+
+
+/*
     private FixtureConfiguration<LCApplication> fixture;
 
     @BeforeEach
@@ -72,5 +103,5 @@ public class LCApplicationAggregateTests {
         fixture.given(new LCApplicationCreatedEvent(applicationId, oldAdvisingBank))
                 .when(new ChangeAdvisingBankCommand(applicationId, newAdvisingBank))
                 .expectEvents(new AdvisingBankChangedEvent(applicationId, newAdvisingBank));
-    }
+    }*/
 }

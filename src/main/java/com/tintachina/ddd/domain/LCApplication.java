@@ -1,19 +1,13 @@
 package com.tintachina.ddd.domain;
 
-import com.tintachina.ddd.domain.commands.ChangeAdvisingBankCommand;
-import com.tintachina.ddd.domain.commands.CreateLCApplicationCommand;
-import com.tintachina.ddd.domain.commands.SubmitLCApplicationCommand;
-import com.tintachina.ddd.domain.events.AdvisingBankChangedEvent;
-import com.tintachina.ddd.domain.events.LCApplicationCreatedEvent;
-import com.tintachina.ddd.domain.events.LCApplicationSubmittedEvent;
+import com.tintachina.ddd.domain.commands.SaveLCApplicationCommand;
+import com.tintachina.ddd.domain.commands.StartNewLCApplicationCommand;
+import com.tintachina.ddd.domain.events.LCApplicationSavedEvent;
+import com.tintachina.ddd.domain.events.LCApplicationStartedEvent;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.eventsourcing.EventSourcingHandler;
 import org.axonframework.modelling.command.AggregateIdentifier;
 import org.axonframework.modelling.command.AggregateLifecycle;
-
-import java.util.Set;
-
-import static org.axonframework.modelling.command.AggregateLifecycle.apply;
 
 public class LCApplication {
 
@@ -27,7 +21,25 @@ public class LCApplication {
         // Required by the framework
     }
 
-    @CommandHandler                                                                 // <2>
+    @CommandHandler
+    public LCApplication(StartNewLCApplicationCommand command) {
+        // TODO: perform validations here
+        AggregateLifecycle.apply(new LCApplicationStartedEvent(command.getId(),
+                command.getApplicantId(), command.getClientReference()));
+    }
+
+    @CommandHandler
+    public void save(SaveLCApplicationCommand command) {
+        AggregateLifecycle.apply(new LCApplicationSavedEvent());
+    }
+
+    @EventSourcingHandler
+    private void on(LCApplicationStartedEvent event) {
+        this.id = event.getId();
+        this.state = State.DRAFT;
+    }
+
+/*    @CommandHandler                                                                 // <2>
     public LCApplication(CreateLCApplicationCommand command) {                      // <3>
         // TODO: perform validations here
         AggregateLifecycle.apply(new LCApplicationCreatedEvent(command.getId()));   // <4>
@@ -71,7 +83,7 @@ public class LCApplication {
     @EventSourcingHandler
     private void on(AdvisingBankChangedEvent event) {
         this.advisingBank = event.getAdvisingBank();
-    }
+    }*/
 
     enum State {
         DRAFT, SUBMITTED, ISSUED
